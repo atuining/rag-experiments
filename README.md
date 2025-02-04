@@ -9,6 +9,7 @@ To run:
 - clone repo
 - add api keys and urls to .env file (use .env.example to check which api keys to add)
 - run the benchmark file
+- install uv here: https://docs.astral.sh/uv/getting-started/installation/
 ```bash
   uv run concurrent-requests.py
 ```
