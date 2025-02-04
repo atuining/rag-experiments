@@ -12,9 +12,16 @@ load_dotenv()
 url = os.environ.get("QDRANT_URL")
 api_key = os.environ.get("QDRANT_API_KEY")
 
+embedding_instance = None
+
 
 def get_embedding_func() -> NomicEmbeddings:
-    return NomicEmbeddings(model="nomic-embed-text-v1.5", inference_mode="local")
+    global embedding_instance
+    if embedding_instance is None:
+        embedding_instance = NomicEmbeddings(
+            model="nomic-embed-text-v1.5", inference_mode="local"
+        )
+    return embedding_instance
 
 
 def get_qdrant_db():
@@ -35,7 +42,7 @@ async def upload_dir(path):
         page.metadata["primary_key"] = uuid4()
         pages.append(page)
     end = perf_counter()
-    print(f"time to upload directory: {end - start}")
+    print(f"time to load directory: {end - start}")
 
     start = perf_counter()
     qdrant = QdrantVectorStore.from_existing_collection(
@@ -86,7 +93,7 @@ async def upload_doc(path):
 async def main():
     # await upload_doc("time series ad literature review.pdf")
     # await upload_dir("books")
-    retriever = get_qdrant_db()
+    retriever = await get_qdrant_db()
     start = perf_counter()
     docs = retriever.invoke("what are b+ trees?")
     end = perf_counter()

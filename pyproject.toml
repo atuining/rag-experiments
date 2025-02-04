@@ -19,4 +19,6 @@ dependencies = [
     "nomic[local]>=3.4.1",
     "pypdf>=5.2.0",
     "python-dotenv>=1.0.1",
+    "opentelemetry-distro[otlp]>=0.50b0",
+    "prometheus-fastapi-instrumentator>=7.0.2",
 ]

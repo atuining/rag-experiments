@@ -25,6 +25,10 @@ TODO:
   - [ ] Deploy vector db to gcp
   - [ ] Test single query latency
   - [ ] Test concurrent latency
+- [ ] Monitoring
+ - [ ] Send api request metrics to prometheus cloud
+ - [ ] Visualize metrics in grafana
+ - [ ] Send logs to loki
 
 Different strategies to test:
 
