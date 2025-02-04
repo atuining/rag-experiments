@@ -1,0 +1,16 @@
+*.pdf
+index/
+book/
+.DS_Store
+.env
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
