@@ -6,7 +6,7 @@ from time import perf_counter
 from langchain import hub
 from langchain_groq import ChatGroq
 from qdrant_cloud import get_qdrant_db
-from fastapi import FastAPI, Depends, HTTPException, Security, status
+from fastapi import FastAPI, Depends, HTTPException, Security, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,7 +43,7 @@ async def verify_bearer_token(
         )
 
 
-app = FastAPI()
+app = FastAPI(dependencies=[Depends(verify_bearer_token)])
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +51,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# @app.middleware("http")
+# async def auth_middleware(request: Request, call_next):
+#     auth_header = request.headers.get("Authorization")
+#     if not auth_header or not auth_header.startswith("Bearer "):
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+#         )
+
+#     token = auth_header.split("Bearer ")[1]
+#     await verify_bearer_token(token)
+#     response = call_next(request)
+
+#     return response
+
 
 instrumentator = Instrumentator().instrument(app).expose(app)
 
@@ -79,11 +95,6 @@ async def rag_query(
     end = perf_counter()
     print(f"time to first token for {index} = {end - start}")
     return resp
-
-
-@app.get("/metrics")
-async def get_metrics(auth: str = Depends(verify_bearer_token)):
-    pass
 
 
 async def main():
