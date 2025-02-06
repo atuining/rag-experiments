@@ -7,7 +7,6 @@ from langchain import hub
 from langchain_groq import ChatGroq
 from qdrant_cloud import get_qdrant_db
 from fastapi import FastAPI, Depends, HTTPException, Security, status
-from fastapi.responses import Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,7 +34,9 @@ security = HTTPBearer()
 EXPECTED_BEARER_TOKEN = os.environ.get("EXPECTED_BEARER_TOKEN")
 
 
-def verify_bearer_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+async def verify_bearer_token(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+):
     if credentials.credentials != EXPECTED_BEARER_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="invalid bearer token"
@@ -51,11 +52,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-instrumentator = Instrumentator().instrument(app)
+instrumentator = Instrumentator().instrument(app).expose(app)
 
 
 @app.get("/test")
-def test():
+async def test():
     return {"hello": "world"}
 
 
@@ -81,8 +82,8 @@ async def rag_query(
 
 
 @app.get("/metrics")
-def get_metrics(auth: str = Depends(verify_bearer_token)):
-    return instrumentator.registry.collect()
+async def get_metrics(auth: str = Depends(verify_bearer_token)):
+    pass
 
 
 async def main():
