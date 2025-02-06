@@ -3,6 +3,7 @@ index/
 book/
 .DS_Store
 .env
+.ruff_cache/
 
 # Python-generated files
 __pycache__/

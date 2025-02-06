@@ -7,8 +7,6 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
 from langchain_qdrant import QdrantVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from llama_parse import LlamaParse
-from llama_index.core import SimpleDirectoryReader
 
 load_dotenv()
 url = os.environ.get("QDRANT_URL")
@@ -20,9 +18,7 @@ embedding_instance = None
 def get_embedding_func() -> OpenAIEmbeddings:
     global embedding_instance
     if embedding_instance is None:
-        embedding_instance = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-        )
+        embedding_instance = OpenAIEmbeddings(model="text-embedding-3-small", )
     return embedding_instance
 
 
