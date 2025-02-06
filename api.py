@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import asyncio
@@ -5,7 +6,9 @@ from time import perf_counter
 from langchain import hub
 from langchain_groq import ChatGroq
 from qdrant_cloud import get_qdrant_db
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, Security, status
+from fastapi.responses import Response
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,6 +30,17 @@ retriever = get_qdrant_db()
 prompt = get_prompt()
 llm = get_llm()
 
+security = HTTPBearer()
+
+EXPECTED_BEARER_TOKEN = os.environ.get("EXPECTED_BEARER_TOKEN")
+
+
+def verify_bearer_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    if credentials.credentials != EXPECTED_BEARER_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="invalid bearer token"
+        )
+
 
 app = FastAPI()
 
@@ -38,7 +52,6 @@ app.add_middleware(
 )
 
 instrumentator = Instrumentator().instrument(app)
-instrumentator.expose(app, endpoint="/metrics")
 
 
 @app.get("/test")
@@ -65,6 +78,11 @@ async def rag_query(
     end = perf_counter()
     print(f"time to first token for {index} = {end - start}")
     return resp
+
+
+@app.get("/metrics")
+def get_metrics(auth: str = Depends(verify_bearer_token)):
+    return instrumentator.registry.collect()
 
 
 async def main():
