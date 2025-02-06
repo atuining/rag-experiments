@@ -53,7 +53,8 @@ async def rag_query(
 ):
     start = perf_counter()
     # retriever = await get_db()
-    retrieved = await retriever.ainvoke(query)
+    retrieval_task = asyncio.create_task(retriever.ainvoke(query))
+    retrieved = await retrieval_task
     end = perf_counter()
     print(f"time to retrieve for {index} = {end - start}")
     docs = "\n\n".join(doc.page_content for doc in retrieved)

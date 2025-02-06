@@ -3,10 +3,12 @@ import asyncio
 from dotenv import load_dotenv
 from uuid import uuid4
 from time import perf_counter
-from langchain_nomic.embeddings import NomicEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import PyPDFLoader, PyPDFDirectoryLoader
 from langchain_qdrant import QdrantVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from llama_parse import LlamaParse
+from llama_index.core import SimpleDirectoryReader
 
 load_dotenv()
 url = os.environ.get("QDRANT_URL")
@@ -15,11 +17,11 @@ api_key = os.environ.get("QDRANT_API_KEY")
 embedding_instance = None
 
 
-def get_embedding_func() -> NomicEmbeddings:
+def get_embedding_func() -> OpenAIEmbeddings:
     global embedding_instance
     if embedding_instance is None:
-        embedding_instance = NomicEmbeddings(
-            model="nomic-embed-text-v1.5", inference_mode="local"
+        embedding_instance = OpenAIEmbeddings(
+            model="text-embedding-3-small",
         )
     return embedding_instance
 
@@ -45,13 +47,14 @@ async def upload_dir(path):
     print(f"time to load directory: {end - start}")
 
     start = perf_counter()
-    qdrant = QdrantVectorStore.from_existing_collection(
+    qdrant = QdrantVectorStore.from_documents(
+        documents=pages,
         embedding=get_embedding_func(),
         collection_name="dsa_collection",
         url=url,
         api_key=api_key,
     )
-    qdrant.add_documents(pages)
+    # qdrant.add_documents(pages)
     end = perf_counter()
     print(f"time to upload dir: {end - start}")
 
@@ -68,10 +71,11 @@ async def upload_doc(path):
     text_splitter = RecursiveCharacterTextSplitter()
     docs = text_splitter.split_documents(pages)
 
-    for i, chunk in enumerate(docs):
-        chunk.metadata["primary_key"] = i
+    for chunk in docs:
+        chunk.metadata["primary_key"] = uuid4()
 
     start = perf_counter()
+    # # add to new collection
     # QdrantVectorStore.from_documents(
     #     documents=docs,
     #     embedding=get_embedding_func(),
@@ -91,9 +95,9 @@ async def upload_doc(path):
 
 
 async def main():
-    # await upload_doc("time series ad literature review.pdf")
+    await upload_doc("time series ad literature review.pdf")
     # await upload_dir("books")
-    retriever = await get_qdrant_db()
+    retriever = get_qdrant_db()
     start = perf_counter()
     docs = retriever.invoke("what are b+ trees?")
     end = perf_counter()
